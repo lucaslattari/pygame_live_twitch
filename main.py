@@ -1,5 +1,5 @@
 import pygame, random
-from sprite_sheet import SpriteSheet
+from entity import Entity
 
 pygame.init()
 
@@ -18,15 +18,13 @@ fundo_img = pygame.image.load("fundo.jpg")
 nova_largura_fundo, nova_altura_fundo = int(fundo_img.get_width() * 0.25), int(fundo_img.get_height() * 0.25)
 fundo_img = pygame.transform.scale(fundo_img, (nova_largura_fundo, nova_altura_fundo))
 
-#boneco do mario
-mario_img = pygame.image.load("mario.png")
-mario_img = pygame.transform.scale(mario_img, (int(mario_img.get_width() * 0.5), int(mario_img.get_height() * 0.5)))
-mario_pos_x = 0
-mario_pos_y = 150
-
 #sprite sheet mario
-mario_sprite = SpriteSheet("mario_sprite_sheet.png", "sprite_data")
+mario_sprite = Entity("mario_sprite_sheet.png", "sprite_data")
 mario_sprite.set_state("PARADO")
+mario_sprite.set_size(2.0)
+mario_pos_x = 100
+mario_pos_y = 450
+mario_andando_frame = 0
 
 #boneco do goomba
 goomba_img = pygame.image.load("goomba.png")
@@ -48,7 +46,6 @@ goomba_update_random_x = 0
 goomba_update_random_y = 0
 frame_counter = 0
 
-mario_andando = 0
 while running:
     for e in pygame.event.get():
         if e.type == pygame.QUIT:
@@ -65,7 +62,7 @@ while running:
     if frame_counter % 60 == 0:
         goomba_update_random_x = random.uniform(-3.0, 3.0)
         goomba_update_random_y = random.uniform(-3.0, 3.0)
-        print("Direção do goomba: (", goomba_update_random_x, goomba_update_random_y, ")")
+        #print("Direção do goomba: (", goomba_update_random_x, goomba_update_random_y, ")")
     #se o goomba sair da tela do lado direito...
     if goomba_pos_x > WIDTH - goomba_img.get_width():
         goomba_pos_x = WIDTH - goomba_img.get_width()
@@ -80,24 +77,42 @@ while running:
         goomba_pos_y = 0
 
     #adicionar o mario no canvas
-    if frame_counter % 30 == 0:
-        mario_andando += 1
-    if mario_andando > 2:
-        mario_andando = 0
-    screen.blit(mario_sprite.image_data, (0, 0), (mario_sprite.get_frame("ANDANDO", mario_andando)))
+    if frame_counter % 2 == 0:
+        mario_andando_frame += 1
+    if mario_andando_frame > 2:
+        mario_andando_frame = 0
 
     mario_pos_x += mario_update_key_x
     if mario_pos_x > WIDTH: #se o mario sair da tela do lado direito...
-        mario_pos_x = - mario_img.get_width()
-    if mario_pos_x < - mario_img.get_width() : #se o mario sair da tela do lado esquerdo...
+        mario_pos_x = - mario_sprite.image_data.get_width()
+    if mario_pos_x < - mario_sprite.image_data.get_width() : #se o mario sair da tela do lado esquerdo...
         mario_pos_x = WIDTH
+
+    print(mario_sprite.get_state())
+    #renderiza o mario
+    if mario_sprite.get_state() == "PARADO":
+        if mario_sprite.direction == "DIREITA":
+            screen.blit(mario_sprite.image_data, (mario_pos_x, mario_pos_y), (mario_sprite.get_frame("PARADO", 0)))
+        if mario_sprite.direction == "ESQUERDA":
+            mario_rect = mario_sprite.image_data.subsurface((mario_sprite.get_frame("PARADO", 0)))
+            screen.blit(pygame.transform.flip(mario_rect, True, False), (mario_pos_x, mario_pos_y))
+    elif mario_sprite.get_state() == "ANDANDO":
+        if mario_sprite.direction == "DIREITA":
+            screen.blit(mario_sprite.image_data, (mario_pos_x, mario_pos_y), (mario_sprite.get_frame("ANDANDO", mario_andando_frame)))
+        if mario_sprite.direction == "ESQUERDA":
+            mario_rect = mario_sprite.image_data.subsurface((mario_sprite.get_frame("ANDANDO", mario_andando_frame)))
+            screen.blit(pygame.transform.flip(mario_rect, True, False), (mario_pos_x, mario_pos_y))
 
     if e.type == pygame.KEYDOWN: #alguma tecla foi pressionada?
         if e.key == pygame.K_LEFT: #apertou a seta da esquerda
             print("apertou a seta da esquerda")
+            mario_sprite.set_state("ANDANDO")
+            mario_sprite.set_direction("ESQUERDA")
             mario_update_key_x = -3
         if e.key == pygame.K_RIGHT: #apertou a seta da direita
             print("apertou a seta da direita")
+            mario_sprite.set_state("ANDANDO")
+            mario_sprite.set_direction("DIREITA")
             mario_update_key_x = 3
         if e.key == pygame.K_RETURN: #apertou enter
             print("apertou o ENTER")
@@ -105,9 +120,12 @@ while running:
             if bola_fogo_em_movimento == False:
                 bola_fogo_em_movimento = True
 
+    print(mario_sprite.direction)
+
     if e.type == pygame.KEYUP: #alguma tecla foi solta?
         if e.key == pygame.K_LEFT or e.key == pygame.K_RIGHT:
             print("soltou as setas")
+            mario_sprite.set_state("PARADO")
             mario_update_key_x = 0
 
     #se a bola de fogo tiver sido disparada...
