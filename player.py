@@ -1,11 +1,16 @@
 import pygame
 
-class Entity:
+class Player:
     def __init__(self, filename_image, filename_data):
         self.image_data = pygame.image.load(filename_image).convert_alpha()
         self.size = 1.0
         self.direction = "DIREITA"
+        self.position = {}
         self.compute_sprite_data(filename_data)
+
+        self.vo = 2
+        self.a = -1
+        self.t = 0
 
     def set_size(self, size):
         self.size = size
@@ -13,6 +18,22 @@ class Entity:
 
     def set_direction(self, direction):
         self.direction = direction
+
+    def set_position(self, x, y):
+        self.position["x"] = x
+        self.position["y"] = y
+
+    def add_position_x(self, x):
+        self.position["x"] += x
+
+    def set_position_x(self, x):
+        self.position["x"] = x
+
+    def set_position_y(self, y):
+        self.position["y"] = y
+
+    def get_position(self):
+        return (self.position["x"], self.position["y"])
 
     def compute_sprite_data(self, filename_data):
         txt_sprite_data_lines = open(filename_data, "r").readlines()
